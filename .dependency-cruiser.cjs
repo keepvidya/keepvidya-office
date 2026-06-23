@@ -23,8 +23,22 @@ module.exports = {
       name: 'no-vendor-outside-adapters',
       comment: 'Wrapper Rule — vendors only inside src/adapters',
       severity: 'error',
-      from: { path: '^src/(domain|ui|app)' },
+      from: { path: '^src/(domain|ui|app|ai)' },
       to: { dependencyTypes: ['npm'] },
+    },
+    {
+      name: 'ai-stays-pure',
+      comment: 'AI core must not import UI or adapters (DIP — ports injected)',
+      severity: 'error',
+      from: { path: '^src/ai' },
+      to: { path: '^src/(ui|adapters)' },
+    },
+    {
+      name: 'domain-not-into-ai',
+      comment: 'domain must not depend on the ai layer',
+      severity: 'error',
+      from: { path: '^src/domain' },
+      to: { path: '^src/ai' },
     },
     {
       name: 'no-circular',
