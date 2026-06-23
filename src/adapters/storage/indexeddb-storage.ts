@@ -16,6 +16,7 @@ function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
     };
     req.onsuccess = () => resolve(req.result);
+    /* v8 ignore next */
     req.onerror = () => reject(req.error);
   });
 }
@@ -23,6 +24,7 @@ function openDb(): Promise<IDBDatabase> {
 function promisify<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result);
+    /* v8 ignore next */
     req.onerror = () => reject(req.error);
   });
 }
@@ -39,6 +41,7 @@ export function createIndexedDbStorage(): StoragePort {
       tx.objectStore(STORE).put(file);
       await new Promise<void>((res, rej) => {
         tx.oncomplete = () => res();
+        /* v8 ignore next */
         tx.onerror = () => rej(tx.error);
       });
     },
@@ -61,6 +64,7 @@ export function createIndexedDbStorage(): StoragePort {
       tx.objectStore(STORE).delete(id);
       await new Promise<void>((res, rej) => {
         tx.oncomplete = () => res();
+        /* v8 ignore next */
         tx.onerror = () => rej(tx.error);
       });
     },

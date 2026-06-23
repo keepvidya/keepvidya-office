@@ -56,6 +56,14 @@ describe('TS-00.1 — use-cases (unit)', () => {
     expect(bad.ok).toBe(false);
   });
 
+  it('createFile surfaces storage failure as Err(StorageError) — never silent', async () => {
+    const throwing = { ...createMemoryStorage(), put: async () => { throw new Error('disk full'); } };
+    const deps: CoreDeps = { storage: throwing, clock: { now: () => 1 }, id: { next: () => 'x' } };
+    const r = await createFile(deps, 'sheets');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.kind).toBe('StorageError');
+  });
+
   it('saveData persists opaque payload; delete removes', async () => {
     const deps = makeDeps();
     const created = await createFile(deps, 'slides');
