@@ -1,0 +1,6 @@
+# Default owners for everything in this repo.
+* @keepvidya
+
+# Governance & protocol changes get extra scrutiny.
+/docs/ENGINEERING-PROTOCOL.md @keepvidya
+/docs/adr/ @keepvidya
