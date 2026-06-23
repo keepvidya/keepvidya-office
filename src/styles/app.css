@@ -68,3 +68,24 @@ button{cursor:pointer}
 .ph-card p{color:var(--text-secondary);font-size:14px;line-height:1.6;margin:0 0 18px}
 .ph-ai{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--primary);background:var(--primary-subtle);border:1px solid var(--primary-border);border-radius:30px;padding:7px 14px}
 .ph-ai svg{width:15px;height:15px}
+
+/* sheets grid */
+.s-wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+.s-formbar{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.s-namebox{width:74px;height:28px;border:1px solid var(--border-strong);border-radius:7px;text-align:center;font-size:12.5px;font-weight:600;background:var(--surface-2)}
+.s-fx{color:var(--text-muted);font-family:var(--font-mono);font-size:13px;font-weight:700}
+.s-forminput{flex:1;height:30px;border:1px solid var(--border-strong);border-radius:7px;padding:0 10px;font-family:var(--font-mono);font-size:13px;background:var(--surface)}
+.s-grid-scroll{flex:1;overflow:auto;position:relative;background:var(--surface);outline:none}
+table.grid{border-collapse:collapse;table-layout:fixed;font-size:13px}
+table.grid th,table.grid td{border:1px solid var(--grid-line);height:25px;padding:0;overflow:hidden;white-space:nowrap}
+table.grid thead th{background:var(--grid-head);color:var(--text-secondary);font-weight:600;text-align:center;position:sticky;top:0;z-index:3;height:24px;font-size:11.5px}
+table.grid tbody th{background:var(--grid-head);color:var(--text-secondary);font-weight:600;text-align:center;position:sticky;left:0;z-index:2;font-size:11.5px}
+table.grid thead th.corner{left:0;z-index:4}
+table.grid td{position:relative;padding:0 5px;max-width:0}
+table.grid td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.grid td.sel{box-shadow:inset 0 0 0 2px var(--cell-sel)}
+table.grid td.err{color:var(--error);font-weight:600}
+table.grid th.collbl.active,table.grid th.rowlbl.active{background:var(--primary-subtle);color:var(--primary)}
+.s-celledit{position:absolute;z-index:20;border:2px solid var(--cell-sel);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font-body);padding:0 4px;outline:none;box-shadow:var(--shadow-md)}
+.s-status{display:flex;align-items:center;gap:16px;padding:5px 16px;border-top:1px solid var(--border);background:var(--surface);font-size:11.5px;color:var(--text-muted)}
+.s-status .agg{margin-left:auto;font-variant-numeric:tabular-nums}

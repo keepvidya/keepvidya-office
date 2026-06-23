@@ -5,6 +5,14 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M2: Sheets edit slice
+- **Editable spreadsheet grid** (`src/ui/sheets/`) wired to the engine via a pure sheet domain
+  (`src/domain/sheet/`: `setCell`/`clearCell`/`compute`/`aggregate`/`normalizeSheet`): click/keyboard nav, inline edit,
+  formula bar, **live recalc**, error styling, a status bar, and **autosave + restore** via the M0 `saveData` use-case.
+- Reusable `editorChrome` (back/title/saved) extracted; Sheets replaces the placeholder editor.
+- Tests: 5 unit + 1 integration + 4 e2e (type `=SUM(...)` → result, `=1/0` → `#DIV/0!`, formula-bar edit, reload-persist).
+  Fixed a real first-keystroke double-char bug surfaced by e2e. Slice docs: `docs/features/02-sheets-edit`.
+
 ### Added — M1: formula engine (domain)
 - **Pure, typed formula engine** under `src/domain/formula/` (refs · tokenizer · parser · evaluator · ~70-function
   registry · `recalc`/`evaluateFormula`), ported from the prototype. Dependency-aware recalculation with memoisation and
