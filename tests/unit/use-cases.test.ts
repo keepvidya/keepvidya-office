@@ -45,13 +45,22 @@ describe('TS-00.1 — use-cases (unit)', () => {
     if (!missing.ok) expect(missing.error.kind).toBe('NotFound');
   });
 
-  it('rename updates name + modified; missing → NotFound', async () => {
+  it('create accepts an explicit name', async () => {
+    const deps = makeDeps();
+    const r = await createFile(deps, 'writer', '  My Doc  ');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.name).toBe('My Doc');
+  });
+
+  it('rename updates name + modified; empty → untitled; missing → NotFound', async () => {
     const deps = makeDeps();
     const created = await createFile(deps, 'writer');
     if (!created.ok) throw new Error('setup');
     const renamed = await renameFile(deps, created.value.id, '  Q3 Report  ');
     expect(renamed.ok).toBe(true);
     if (renamed.ok) expect(renamed.value.name).toBe('Q3 Report');
+    const blanked = await renameFile(deps, created.value.id, '   ');
+    if (blanked.ok) expect(blanked.value.name).toBe('Untitled document'); // falls back
     const bad = await renameFile(deps, 'nope', 'x');
     expect(bad.ok).toBe(false);
   });
