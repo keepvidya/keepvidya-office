@@ -6,7 +6,7 @@
 > AI-native, slice by slice.
 > Sibling document: `keepvidya-saathi/docs/ENGINEERING-PROTOCOL.md`. **This app is separate from Saathi** and ships on
 > its own; the two share engineering DNA but not code or release cadence.
-> Status: **DRAFT — awaiting owner sign-off.** After sign-off, changes go through an ADR ([docs/adr](./adr)).
+> Status: **APPROVED — owner sign-off 2026-06-23** (owner directed M0 build + GitHub-first setup). Changes now go through an ADR ([docs/adr](./adr)).
 
 ## 0. The prime directive — Plan → Document → Execute
 
