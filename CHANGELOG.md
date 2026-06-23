@@ -5,6 +5,13 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M1: formula engine (domain)
+- **Pure, typed formula engine** under `src/domain/formula/` (refs · tokenizer · parser · evaluator · ~70-function
+  registry · `recalc`/`evaluateFormula`), ported from the prototype. Dependency-aware recalculation with memoisation and
+  **circular-reference detection** (`#CIRC!`); documented complexity + a 1,000-cell perf-budget test.
+- Fixed two latent tokenizer bugs found by tests: `LOG10(` mis-read as a cell ref, and `TRUE()/FALSE()` not callable.
+- 37 new unit/integration tests (engine now 90%+ branch coverage). Full slice docs in `docs/features/01-formula-engine`.
+
 ### Added
 - **Engineering protocol & governance**: `ENGINEERING-PROTOCOL.md`, `BUILD-PLAN.md`, ADR-0001/0002/0003, feature-doc
   templates, and the fully-documented first slice (`docs/features/00-walking-skeleton`).
