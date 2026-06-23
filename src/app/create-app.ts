@@ -4,9 +4,11 @@
 import { el, mount } from '../ui/dom';
 import { icons } from '../ui/icons';
 import { renderHome } from '../ui/home';
-import { renderEditor } from '../ui/editor-view';
+import { editorChrome, placeholderBody } from '../ui/editor-view';
+import { renderSheets } from '../ui/sheets/sheets-view';
 import { type Route, createRouter, routeToHash } from './router';
-import { createFile, deleteFile, listFiles, openFile, renameFile } from '../domain/use-cases';
+import { createFile, deleteFile, listFiles, openFile, renameFile, saveData } from '../domain/use-cases';
+import { normalizeSheet } from '../domain/sheet/sheet';
 import { currentTheme, toggleTheme } from '../domain/theme';
 import type { ClockPort, IdPort, StoragePort, ThemePort } from '../domain/ports';
 import type { FileType } from '../domain/file';
@@ -38,16 +40,20 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
         router.go('#/home');
         return;
       }
-      mount(
-        host,
-        shell(
-          renderEditor({
-            file: res.value,
-            onBack: () => router.go('#/home'),
-            onRename: (name) => void renameFile(deps, route.id, name),
-          }),
-        ),
-      );
+      const file = res.value;
+      const handlers = {
+        file,
+        onBack: () => router.go('#/home'),
+        onRename: (name: string) => void renameFile(deps, route.id, name),
+      };
+      const body =
+        file.type === 'sheets'
+          ? renderSheets({
+              data: normalizeSheet(file.data),
+              onChange: (d) => void saveData(deps, route.id, d),
+            })
+          : placeholderBody(file);
+      mount(host, shell(editorChrome(handlers, body)));
       return;
     }
     const files = await listFiles(deps);

@@ -18,7 +18,8 @@ test('TC-00.3.2 — create routes to the editor', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('new-sheets').click();
   await expect(page).toHaveURL(/#\/sheets\//);
-  await expect(page.getByTestId('editor-sheets')).toBeVisible();
+  await expect(page.getByTestId('editor')).toBeVisible();
+  await expect(page.getByTestId('grid')).toBeVisible();
 });
 
 test('TC-00.3.3 — persistence survives reload', async ({ page }) => {
