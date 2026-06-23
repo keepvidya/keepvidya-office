@@ -10,7 +10,9 @@ import { type Route, createRouter, routeToHash } from './router';
 import { createFile, deleteFile, listFiles, openFile, renameFile, saveData } from '../domain/use-cases';
 import { normalizeSheet } from '../domain/sheet/sheet';
 import { currentTheme, toggleTheme } from '../domain/theme';
+import { fillSheet } from '../ai/orchestrator';
 import type { ClockPort, IdPort, StoragePort, ThemePort } from '../domain/ports';
+import type { LlmPort } from '../ai/ports';
 import type { FileType } from '../domain/file';
 
 export interface AppPorts {
@@ -18,6 +20,7 @@ export interface AppPorts {
   clock: ClockPort;
   id: IdPort;
   theme: ThemePort;
+  llm: LlmPort;
 }
 
 export interface App {
@@ -51,6 +54,10 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
           ? renderSheets({
               data: normalizeSheet(file.data),
               onChange: (d) => void saveData(deps, route.id, d),
+              aiFill: async (prompt, d) => {
+                const r = await fillSheet(prompt, d, { llm: ports.llm });
+                return { data: r.data, ok: r.ok, note: r.note };
+              },
             })
           : placeholderBody(file);
       mount(host, shell(editorChrome(handlers, body)));

@@ -11,6 +11,7 @@ const HEADW = 46;
 export interface SheetsHandlers {
   data: SheetData;
   onChange: (data: SheetData) => void;
+  aiFill?: (prompt: string, data: SheetData) => Promise<{ data: SheetData; ok: boolean; note?: string }>;
 }
 
 export function renderSheets(h: SheetsHandlers): HTMLElement {
@@ -249,7 +250,52 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
     scroll.focus({ preventScroll: true });
   }
 
-  const wrap = el('div', { class: 's-wrap' }, [formBar, scroll, status]);
+  /* optional AI prompt bar (narrator spine) */
+  let aiBar: HTMLElement | null = null;
+  if (h.aiFill) {
+    const aiFill = h.aiFill;
+    const promptInput = el('input', {
+      class: 'ai-prompt',
+      placeholder: 'Ask AI to fill this sheet… (e.g. a freelancer monthly budget)',
+      'data-testid': 'ai-prompt',
+    }) as HTMLInputElement;
+    const note = el('span', { class: 'ai-note', 'data-testid': 'ai-note' });
+    const genBtn = el('button', {
+      class: 'ai-gen',
+      text: 'Generate',
+      'data-testid': 'ai-generate',
+    }) as HTMLButtonElement;
+    const run = async (): Promise<void> => {
+      const p = promptInput.value.trim();
+      if (!p || genBtn.disabled) return;
+      genBtn.disabled = true;
+      genBtn.textContent = 'Generating…';
+      note.textContent = '';
+      try {
+        const out = await aiFill(p, data);
+        data = out.data;
+        results = compute(data);
+        renderValues();
+        h.onChange(data);
+        note.textContent = out.ok ? '✓ filled' : (out.note ?? 'No result');
+      } finally {
+        genBtn.disabled = false;
+        genBtn.textContent = 'Generate';
+      }
+    };
+    genBtn.addEventListener('click', () => void run());
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') void run();
+    });
+    aiBar = el('div', { class: 'ai-bar' }, [
+      el('span', { class: 'ai-spark', text: '✦' }),
+      promptInput,
+      genBtn,
+      note,
+    ]);
+  }
+
+  const wrap = el('div', { class: 's-wrap' }, [aiBar, formBar, scroll, status]);
   renderValues();
   setTimeout(focusGrid, 30);
   return wrap;

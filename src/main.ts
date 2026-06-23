@@ -5,6 +5,7 @@ import { createApp } from './app/create-app';
 import { createIndexedDbStorage } from './adapters/storage/indexeddb-storage';
 import { createDomTheme } from './adapters/theme/dom-theme';
 import { createIdGen, createSystemClock } from './adapters/system/system';
+import { createFixtureLlm } from './adapters/llm/mock-llm';
 
 const host = document.getElementById('app');
 if (host) {
@@ -15,5 +16,6 @@ if (host) {
     clock: createSystemClock(),
     id: createIdGen(),
     theme,
+    llm: createFixtureLlm(), // mock model for now; Shiva/BYOK adapter at M4
   }).start();
 }

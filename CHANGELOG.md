@@ -5,6 +5,17 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M3: AI plumbing (the narrator spine)
+- **AI pipeline** (`src/ai/`) realising ADR-0003: `LlmPort` (model abstraction) → `validateSheetIntent` (hand-written
+  schema, no vendor) → guardrail pipeline with **bounded self-correction** → deterministic `applySheetIntent` → engine
+  computes. The model emits only validated *intent*; a malformed/hallucinated output is rejected before any cell changes.
+- **Mock LLM adapter** (`adapters/llm/mock-llm`) — deterministic, so the whole pipeline is testable in CI; Shiva/BYOK swaps
+  in at M4 behind the same port.
+- **Sheets prompt bar**: type a request → cells fill and formulas compute live (e.g. a budget whose `Net=SUM(...)`=2400).
+- **AI eval harness** (`tests/evals/`, §6.4): golden prompts scored on trajectory (retry count) + applied-cell correctness
+  with a fixture model. Boundary rules extended to keep `src/ai` pure. 62 unit/integration/eval + 9 e2e green.
+  Slice docs: `docs/features/03-ai-plumbing`.
+
 ### Added — M2: Sheets edit slice
 - **Editable spreadsheet grid** (`src/ui/sheets/`) wired to the engine via a pure sheet domain
   (`src/domain/sheet/`: `setCell`/`clearCell`/`compute`/`aggregate`/`normalizeSheet`): click/keyboard nav, inline edit,
