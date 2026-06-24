@@ -14,10 +14,23 @@ export const BUDGET_FIXTURE = JSON.stringify({
   ],
 });
 
-export function createFixtureLlm(text: string = BUDGET_FIXTURE): LlmPort {
+// A pitch-deck intent the mock returns for slide prompts.
+export const DECK_FIXTURE = JSON.stringify({
+  slides: [
+    { title: 'Your Big Idea', bullets: ['A one-line description of what you do'] },
+    { title: 'The Problem', bullets: ['People struggle with X', 'Existing tools are clunky', 'It wastes time and money'] },
+    { title: 'Our Solution', bullets: ['We do X simply', 'Local-first and private', 'Fast to get started'] },
+    { title: 'Traction', bullets: ['Early users love it', 'Growing every week', 'Strong retention'] },
+    { title: 'The Ask', bullets: ['Partner with us', 'Try the beta', 'Spread the word'] },
+  ],
+});
+
+// When called with no fixed text, route by the system prompt: deck vs sheet.
+export function createFixtureLlm(text?: string): LlmPort {
   return {
-    async complete() {
-      return { text };
+    async complete(req) {
+      if (text != null) return { text };
+      return { text: /slide|deck/i.test(req.system) ? DECK_FIXTURE : BUDGET_FIXTURE };
     },
   };
 }

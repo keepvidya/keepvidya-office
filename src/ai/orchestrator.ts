@@ -2,11 +2,11 @@
 // sheet. Never throws; returns the original sheet + a note on failure.
 import type { SheetData } from '../domain/sheet/sheet';
 import { applySheetIntent } from './applier/sheet-applier';
-import { type IntentOutcome, type PipelineDeps, generateSheetIntent } from './pipeline';
+import { type PipelineDeps, type TraceStep, generateSheetIntent } from './pipeline';
 
 export interface FillResult {
   data: SheetData;
-  trace: IntentOutcome['trace'];
+  trace: TraceStep[];
   ok: boolean;
   note?: string;
 }
