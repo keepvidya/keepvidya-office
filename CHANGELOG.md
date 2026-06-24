@@ -5,6 +5,15 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M6: AI Writer ("prompt → document") — completes the trifecta
+- **Writer editor** (`src/ui/writer/`): a contentEditable document page with an `execCommand` toolbar (paragraph styles,
+  bold/italic/underline, lists, undo/redo), a live word count, an AI prompt bar, and autosave — replaces the placeholder.
+- **AI document generation**: prompt → `DocIntent` (the model emits headings/paragraphs/bullets only) → deterministic
+  HTML via `doc-applier` (our markup, model text escaped) → a formatted draft. Reuses the generic pipeline.
+- Doc domain (`src/domain/doc/`: `DocData`, `normalizeDoc`, `wordCount`). Mock returns a project-proposal fixture for
+  writer prompts (system-prompt routing fixed to a unique token). 87 unit/integration/eval + 15 e2e green.
+  Slice docs: `docs/features/06-ai-writer`. **All three apps (Writer/Sheets/Slides) now have real editors + AI.**
+
 ### Added — M5: Real model providers (Shiva / BYOK)
 - **Real `LlmPort` adapters**: `ollama-llm` (Shiva via a local Ollama endpoint, default-private, no key) and
   `openai-compat-llm` (BYOK — any OpenAI-compatible endpoint, Bearer key), plus a **configurable** `LlmPort` (Proxy) that
