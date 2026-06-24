@@ -7,6 +7,7 @@ import { renderHome } from '../ui/home';
 import { editorChrome, placeholderBody } from '../ui/editor-view';
 import { renderSheets } from '../ui/sheets/sheets-view';
 import { renderSlides } from '../ui/slides/slides-view';
+import { renderSettingsModal } from '../ui/settings';
 import { type Route, createRouter, routeToHash } from './router';
 import { createFile, deleteFile, listFiles, openFile, renameFile, saveData } from '../domain/use-cases';
 import { normalizeSheet } from '../domain/sheet/sheet';
@@ -14,7 +15,7 @@ import { normalizeDeck } from '../domain/slides/slides';
 import { currentTheme, toggleTheme } from '../domain/theme';
 import { fillSheet } from '../ai/orchestrator';
 import { buildDeck } from '../ai/deck-orchestrator';
-import type { ClockPort, IdPort, StoragePort, ThemePort } from '../domain/ports';
+import type { ClockPort, IdPort, ProviderSettingsPort, StoragePort, ThemePort } from '../domain/ports';
 import type { LlmPort } from '../ai/ports';
 import type { FileType } from '../domain/file';
 
@@ -24,6 +25,7 @@ export interface AppPorts {
   id: IdPort;
   theme: ThemePort;
   llm: LlmPort;
+  settings: ProviderSettingsPort;
 }
 
 export interface App {
@@ -109,6 +111,13 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
       el('div', { class: 'sp' }),
       el('button', {
         class: 'rbtn',
+        'data-tip': 'AI provider',
+        'data-testid': 'settings-btn',
+        html: icons.gear,
+        onclick: openSettings,
+      }),
+      el('button', {
+        class: 'rbtn',
         'data-tip': 'Theme',
         'data-testid': 'theme-toggle',
         html: themeIcon,
@@ -118,6 +127,15 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
         },
       }),
     ]);
+  }
+
+  function openSettings(): void {
+    const modal = renderSettingsModal({
+      config: ports.settings.get(),
+      onSave: (c) => ports.settings.set(c),
+      onClose: () => modal.remove(),
+    });
+    document.body.appendChild(modal);
   }
 
   return {
