@@ -2,7 +2,16 @@
 // updates only changed cells' text/classes on each edit (DEV §9). DOM lives here
 // (UI layer); all computation goes through domain/sheet + the M1 engine.
 import { el } from '../dom';
-import { type SheetData, aggregate, compute, setCell } from '../../domain/sheet/sheet';
+import {
+  type CellFmt,
+  type SheetData,
+  aggregate,
+  cellsInRange,
+  compute,
+  setCell,
+  setCellFormat,
+  setCells,
+} from '../../domain/sheet/sheet';
 import { type CellResult, makeRef, numToCol } from '../../domain/formula';
 
 const COLW = 96;
@@ -18,17 +27,20 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
   let data = h.data;
   let results = compute(data);
   let active = { c: 1, r: 1 };
+  let anchor = { c: 1, r: 1 };
   let editing = false;
+  let dragging = false;
   const tdMap: Record<string, HTMLTableCellElement> = Object.create(null);
   const refOf = (a: { c: number; r: number }) => makeRef(a.c, a.r);
+  const selRect = () => ({
+    c1: Math.min(anchor.c, active.c),
+    c2: Math.max(anchor.c, active.c),
+    r1: Math.min(anchor.r, active.r),
+    r2: Math.max(anchor.r, active.r),
+  });
 
   /* formula bar */
-  const nameBox = el('input', {
-    class: 's-namebox',
-    readonly: 'true',
-    value: 'A1',
-    'data-testid': 'cell-name',
-  }) as HTMLInputElement;
+  const nameBox = el('input', { class: 's-namebox', readonly: 'true', value: 'A1', 'data-testid': 'cell-name' }) as HTMLInputElement;
   const formInput = el('input', {
     class: 's-forminput',
     spellcheck: 'false',
@@ -46,17 +58,18 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
       focusGrid();
     }
   });
-  const formBar = el('div', { class: 's-formbar' }, [
-    nameBox,
-    el('span', { class: 's-fx', text: 'ƒx' }),
-    formInput,
+  const formBar = el('div', { class: 's-formbar' }, [nameBox, el('span', { class: 's-fx', text: 'ƒx' }), formInput]);
+
+  /* toolbar */
+  const boldBtn = el('button', { class: 'tb', title: 'Bold', html: '<b>B</b>', 'data-testid': 'fmt-bold', onclick: () => toggleFmt('b') }) as HTMLButtonElement;
+  const italBtn = el('button', { class: 'tb', title: 'Italic', html: '<i>I</i>', 'data-testid': 'fmt-italic', onclick: () => toggleFmt('i') }) as HTMLButtonElement;
+  const toolbar = el('div', { class: 'tbar' }, [
+    el('div', { class: 'grp' }, [boldBtn, italBtn]),
+    el('div', { class: 'grp' }, [el('button', { class: 'tb', title: 'Sum selection', html: '∑', 'data-testid': 'quick-sum', onclick: quickSum })]),
   ]);
 
   /* grid */
-  const table = el('table', {
-    class: 'grid',
-    style: `width:${HEADW + COLW * data.cols}px`,
-  }) as HTMLTableElement;
+  const table = el('table', { class: 'grid', style: `width:${HEADW + COLW * data.cols}px` }) as HTMLTableElement;
   const colgroup = el('colgroup');
   colgroup.appendChild(el('col', { style: `width:${HEADW}px` }));
   for (let c = 1; c <= data.cols; c++) colgroup.appendChild(el('col', { style: `width:${COLW}px` }));
@@ -65,8 +78,7 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
   const thead = el('thead');
   const htr = el('tr');
   htr.appendChild(el('th', { class: 'corner' }));
-  for (let c = 1; c <= data.cols; c++)
-    htr.appendChild(el('th', { class: 'collbl', 'data-c': c, text: numToCol(c) }));
+  for (let c = 1; c <= data.cols; c++) htr.appendChild(el('th', { class: 'collbl', 'data-c': c, text: numToCol(c) }));
   thead.appendChild(htr);
   table.appendChild(thead);
 
@@ -86,7 +98,7 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
 
   const editor = el('input', { class: 's-celledit', style: 'display:none' }) as HTMLInputElement;
   const scroll = el('div', { class: 's-grid-scroll', tabindex: '0', 'data-testid': 'grid' }, [table, editor]);
-  const status = el('div', { class: 's-status' });
+  const status = el('div', { class: 's-status', 'data-testid': 'sheet-status' });
 
   /* rendering */
   function renderValues(): void {
@@ -101,32 +113,47 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
       } else {
         td.textContent = '';
       }
+      const f = data.fmt?.[ref];
+      if (f?.b) td.classList.add('bold');
+      if (f?.i) td.classList.add('ital');
     }
     paintSelection();
   }
   function paintSelection(): void {
-    table.querySelectorAll('td.sel').forEach((td) => td.classList.remove('sel'));
-    htr.querySelectorAll('th.active').forEach((th) => th.classList.remove('active'));
-    tbody.querySelectorAll('th.active').forEach((th) => th.classList.remove('active'));
-    const ref = refOf(active);
-    tdMap[ref]?.classList.add('sel');
+    table.querySelectorAll('td.sel,td.inrange').forEach((td) => td.classList.remove('sel', 'inrange'));
+    table.querySelectorAll('th.active').forEach((th) => th.classList.remove('active'));
+    const rect = selRect();
+    for (let r = rect.r1; r <= rect.r2; r++)
+      for (let c = rect.c1; c <= rect.c2; c++) tdMap[makeRef(c, r)]?.classList.add('inrange');
+    tdMap[refOf(active)]?.classList.add('sel');
     htr.querySelector(`th[data-c="${active.c}"]`)?.classList.add('active');
     tbody.querySelector(`th[data-r="${active.r}"]`)?.classList.add('active');
-    nameBox.value = ref;
-    formInput.value = String(data.cells[ref] ?? '');
+    nameBox.value = refOf(active);
+    formInput.value = String(data.cells[refOf(active)] ?? '');
+    syncFmtButtons();
     renderStatus();
   }
+  function syncFmtButtons(): void {
+    const f = data.fmt?.[refOf(active)];
+    boldBtn.classList.toggle('on', !!f?.b);
+    italBtn.classList.toggle('on', !!f?.i);
+  }
   function renderStatus(): void {
-    const ref = refOf(active);
-    const agg = aggregate(results, [ref]);
-    const v = results[ref];
-    const left = `<span>${ref}</span>`;
-    const right = agg.count
-      ? `<span class="agg">Value ${agg.sum}</span>`
-      : v && v.display
-        ? `<span class="agg">${escapeText(v.display)}</span>`
-        : '';
-    status.innerHTML = left + right;
+    const rect = selRect();
+    const refs = cellsInRange(rect.c1, rect.r1, rect.c2, rect.r2);
+    const agg = aggregate(results, refs);
+    const single = refs.length === 1;
+    const label = single ? refOf(active) : `${makeRef(rect.c1, rect.r1)}:${makeRef(rect.c2, rect.r2)}`;
+    let right = '';
+    if (agg.count > 0 && !single) {
+      right = `Sum ${round(agg.sum)} · Avg ${round(agg.avg ?? 0)} · Count ${agg.count} · Min ${round(agg.min ?? 0)} · Max ${round(agg.max ?? 0)}`;
+    } else if (agg.count > 0) {
+      right = `Value ${round(agg.sum)}`;
+    } else {
+      const v = results[refOf(active)];
+      right = v && v.display ? escapeText(v.display) : `Count ${agg.count}`;
+    }
+    status.innerHTML = `<span>${label}</span><span class="agg">${right}</span>`;
   }
 
   /* editing */
@@ -135,6 +162,33 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
     results = compute(data);
     renderValues();
     h.onChange(data);
+  }
+  function toggleFmt(key: 'b' | 'i'): void {
+    const rect = selRect();
+    const refs = cellsInRange(rect.c1, rect.r1, rect.c2, rect.r2);
+    const cur = data.fmt?.[refOf(active)];
+    const next = !(cur && cur[key]);
+    const patch: Partial<CellFmt> = key === 'b' ? { b: next } : { i: next };
+    data = setCellFormat(data, refs, patch);
+    renderValues();
+    h.onChange(data);
+    focusGrid();
+  }
+  function quickSum(): void {
+    const rect = selRect();
+    const singleCell = rect.c1 === rect.c2 && rect.r1 === rect.r2;
+    if (singleCell) {
+      const c = active.c;
+      if (active.r <= 1 || data.cells[makeRef(c, active.r - 1)] == null) return; // nothing above
+      let top = active.r - 1;
+      while (top > 1 && data.cells[makeRef(c, top - 1)] != null) top--;
+      setRaw(refOf(active), `=SUM(${makeRef(c, top)}:${makeRef(c, active.r - 1)})`);
+    } else {
+      const r = Math.min(rect.r2 + 1, data.rows);
+      setRaw(makeRef(rect.c1, r), `=SUM(${makeRef(rect.c1, rect.r1)}:${makeRef(rect.c2, rect.r2)})`);
+      setActive(rect.c1, r);
+    }
+    focusGrid();
   }
   function placeEditor(td: HTMLTableCellElement): void {
     const cr = scroll.getBoundingClientRect();
@@ -146,9 +200,8 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
   }
   function startEdit(initial?: string): void {
     const ref = refOf(active);
-    const td = tdMap[ref];
     editing = true;
-    placeEditor(td);
+    placeEditor(tdMap[ref]);
     editor.value = initial ?? String(data.cells[ref] ?? '');
     editor.style.display = '';
     editor.focus();
@@ -186,14 +239,15 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
     if (editing) commitEdit(0, 0);
   });
 
-  /* navigation */
-  function setActive(c: number, r: number): void {
+  /* navigation + selection */
+  function setActive(c: number, r: number, extend = false): void {
     active = { c: clamp(c, 1, data.cols), r: clamp(r, 1, data.rows) };
+    if (!extend) anchor = { ...active };
     ensureVisible(tdMap[refOf(active)]);
     paintSelection();
   }
-  function moveActive(dc: number, dr: number): void {
-    setActive(active.c + dc, active.r + dr);
+  function moveActive(dc: number, dr: number, extend = false): void {
+    setActive(active.c + dc, active.r + dr, extend);
   }
   function ensureVisible(td: HTMLTableCellElement | undefined): void {
     if (!td) return;
@@ -209,30 +263,61 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
     const td = (e.target as HTMLElement).closest('td');
     if (!td) return;
     if (editing) commitEdit(0, 0);
-    setActive(Number(td.dataset.c), Number(td.dataset.r));
+    setActive(Number(td.dataset.c), Number(td.dataset.r), (e as MouseEvent).shiftKey);
+    dragging = true;
     focusGrid();
     e.preventDefault();
   });
+  table.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const td = (e.target as HTMLElement).closest('td');
+    if (!td) return;
+    setActive(Number(td.dataset.c), Number(td.dataset.r), true);
+  });
+  scroll.addEventListener('mouseup', () => (dragging = false));
+  scroll.addEventListener('mouseleave', () => (dragging = false));
   table.addEventListener('dblclick', (e) => {
     const td = (e.target as HTMLElement).closest('td');
     if (!td) return;
     setActive(Number(td.dataset.c), Number(td.dataset.r));
     startEdit();
   });
+  // column / row header selection
+  htr.addEventListener('click', (e) => {
+    const th = (e.target as HTMLElement).closest('th.collbl');
+    if (!th) return;
+    const c = Number((th as HTMLElement).dataset.c);
+    anchor = { c, r: 1 };
+    setActive(c, data.rows, true);
+  });
+  tbody.addEventListener('click', (e) => {
+    const th = (e.target as HTMLElement).closest('th.rowlbl');
+    if (!th) return;
+    const r = Number((th as HTMLElement).dataset.r);
+    anchor = { c: 1, r };
+    setActive(data.cols, r, true);
+  });
 
   scroll.addEventListener('keydown', (e) => {
     if (editing) return;
     const k = e.key;
+    const ext = e.shiftKey;
     if (k === 'ArrowUp') {
       e.preventDefault();
-      moveActive(0, -1);
-    } else if (k === 'ArrowDown' || k === 'Enter') {
+      moveActive(0, -1, ext);
+    } else if (k === 'ArrowDown') {
+      e.preventDefault();
+      moveActive(0, 1, ext);
+    } else if (k === 'Enter') {
       e.preventDefault();
       moveActive(0, 1);
     } else if (k === 'ArrowLeft') {
       e.preventDefault();
-      moveActive(-1, 0);
-    } else if (k === 'ArrowRight' || k === 'Tab') {
+      moveActive(-1, 0, ext);
+    } else if (k === 'ArrowRight') {
+      e.preventDefault();
+      moveActive(1, 0, ext);
+    } else if (k === 'Tab') {
       e.preventDefault();
       moveActive(1, 0);
     } else if (k === 'F2') {
@@ -240,12 +325,35 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
       startEdit();
     } else if (k === 'Delete' || k === 'Backspace') {
       e.preventDefault();
-      setRaw(refOf(active), '');
+      clearSelection();
+    } else if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === 'b') {
+      e.preventDefault();
+      toggleFmt('b');
     } else if (!e.ctrlKey && !e.metaKey && !e.altKey && k.length === 1) {
-      e.preventDefault(); // seed the char ourselves; don't let the browser also insert it
+      e.preventDefault();
       startEdit(k);
     }
   });
+  scroll.addEventListener('paste', (e: ClipboardEvent) => {
+    const text = e.clipboardData?.getData('text') ?? '';
+    if (!text) return;
+    e.preventDefault();
+    const rows = text.replace(/\r/g, '').replace(/\n$/, '').split('\n').map((line) => line.split('\t'));
+    const writes: { ref: string; value: string }[] = [];
+    rows.forEach((cols, ri) => cols.forEach((val, ci) => writes.push({ ref: makeRef(active.c + ci, active.r + ri), value: val })));
+    data = setCells(data, writes);
+    results = compute(data);
+    renderValues();
+    h.onChange(data);
+  });
+  function clearSelection(): void {
+    const rect = selRect();
+    const refs = cellsInRange(rect.c1, rect.r1, rect.c2, rect.r2);
+    data = setCells(data, refs.map((ref) => ({ ref, value: '' })));
+    results = compute(data);
+    renderValues();
+    h.onChange(data);
+  }
   function focusGrid(): void {
     scroll.focus({ preventScroll: true });
   }
@@ -260,11 +368,7 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
       'data-testid': 'ai-prompt',
     }) as HTMLInputElement;
     const note = el('span', { class: 'ai-note', 'data-testid': 'ai-note' });
-    const genBtn = el('button', {
-      class: 'ai-gen',
-      text: 'Generate',
-      'data-testid': 'ai-generate',
-    }) as HTMLButtonElement;
+    const genBtn = el('button', { class: 'ai-gen', text: 'Generate', 'data-testid': 'ai-generate' }) as HTMLButtonElement;
     const run = async (): Promise<void> => {
       const p = promptInput.value.trim();
       if (!p || genBtn.disabled) return;
@@ -287,15 +391,10 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
     promptInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') void run();
     });
-    aiBar = el('div', { class: 'ai-bar' }, [
-      el('span', { class: 'ai-spark', text: '✦' }),
-      promptInput,
-      genBtn,
-      note,
-    ]);
+    aiBar = el('div', { class: 'ai-bar' }, [el('span', { class: 'ai-spark', text: '✦' }), promptInput, genBtn, note]);
   }
 
-  const wrap = el('div', { class: 's-wrap' }, [aiBar, formBar, scroll, status]);
+  const wrap = el('div', { class: 's-wrap' }, [aiBar, formBar, toolbar, scroll, status]);
   renderValues();
   setTimeout(focusGrid, 30);
   return wrap;
@@ -303,6 +402,9 @@ export function renderSheets(h: SheetsHandlers): HTMLElement {
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n));
+}
+function round(n: number): number {
+  return Math.round(n * 1e6) / 1e6;
 }
 function escapeText(s: string): string {
   return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c] ?? c);

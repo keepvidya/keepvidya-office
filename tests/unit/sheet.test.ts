@@ -8,7 +8,7 @@ import {
   setCell,
 } from '../../src/domain/sheet/sheet';
 
-const base: SheetData = { cells: {}, cols: 26, rows: 100 };
+const base: SheetData = { cells: {}, cols: 26, rows: 100, fmt: {} };
 
 describe('TS-02.1 — sheet domain (unit)', () => {
   it('TC-02.1.1 — setCell / clearCell are immutable', () => {
@@ -39,12 +39,12 @@ describe('TS-02.1 — sheet domain (unit)', () => {
   });
 
   it('TC-02.1.4 — normalizeSheet guards bad input', () => {
-    expect(normalizeSheet(undefined)).toEqual({ cells: {}, cols: 26, rows: 100 });
+    expect(normalizeSheet(undefined)).toEqual({ cells: {}, cols: 26, rows: 100, fmt: {} });
     const n = normalizeSheet({ cells: { A1: '1' } });
     expect(n.cells['A1']).toBe('1');
     expect(n.cols).toBe(26);
     expect(n.rows).toBe(100);
     // too-small dimensions are clamped up to the minimum grid
-    expect(normalizeSheet({ cols: 5, rows: 5 })).toEqual({ cells: {}, cols: 26, rows: 100 });
+    expect(normalizeSheet({ cols: 5, rows: 5 })).toEqual({ cells: {}, cols: 26, rows: 100, fmt: {} });
   });
 });

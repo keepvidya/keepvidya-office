@@ -5,6 +5,13 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — P1: Sheets parity (range select · cell format · ∑ · paste)
+- **Range selection** (drag, shift-click/arrow, header click) with a live status-bar aggregate (Sum / Avg / Count / Min / Max),
+  **cell bold/italic** (rendered + persisted + **exported to Excel as bold/italic font**), a **∑ quick-sum** button, and
+  **multi-cell TSV paste** — porting the prototype's grid features onto the typed editor.
+- New pure sheet helpers (`cellsInRange`, `setCells`, `setCellFormat`, `fmt` on `SheetData`). 96 unit/integration + 20 e2e
+  green (M2 flows unchanged). Slice docs: `docs/features/P1-sheets-parity`.
+
 ### Added — M7: Real Office export (.xlsx / .docx / .pptx) — "opens in MS Office"
 - **Three export adapters** wrapping ExcelJS / docx / pptxgenjs (Wrapper Rule — vendors only under `src/adapters/export`,
   enforced by eslint + dependency-cruiser) exposing an `ExportPort`. An **Export** button in each editor downloads the

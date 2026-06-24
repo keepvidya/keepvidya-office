@@ -85,8 +85,13 @@ table.grid tbody th{background:var(--grid-head);color:var(--text-secondary);font
 table.grid thead th.corner{left:0;z-index:4}
 table.grid td{position:relative;padding:0 5px;max-width:0}
 table.grid td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.grid td.inrange{background:var(--cell-sel-fill)}
 table.grid td.sel{box-shadow:inset 0 0 0 2px var(--cell-sel)}
 table.grid td.err{color:var(--error);font-weight:600}
+table.grid td.bold{font-weight:700}
+table.grid td.ital{font-style:italic}
+table.grid th.collbl,table.grid th.rowlbl{cursor:pointer}
+table.grid th.collbl.active,table.grid th.rowlbl.active{background:var(--primary-subtle);color:var(--primary)}
 table.grid th.collbl.active,table.grid th.rowlbl.active{background:var(--primary-subtle);color:var(--primary)}
 .s-celledit{position:absolute;z-index:20;border:2px solid var(--cell-sel);background:var(--surface);color:var(--text);font-size:13px;font-family:var(--font-body);padding:0 4px;outline:none;box-shadow:var(--shadow-md)}
 .s-status{display:flex;align-items:center;gap:16px;padding:5px 16px;border-top:1px solid var(--border);background:var(--surface);font-size:11.5px;color:var(--text-muted)}

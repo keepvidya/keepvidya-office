@@ -33,6 +33,13 @@ describe('TS-07.1 — Office export adapters (real vendors)', () => {
     expect(b8.formula).toBe('SUM(B2:B7)');
   });
 
+  it('TC-P1.2.1 — bold cell exports bold font', async () => {
+    const sheet: SheetData = { cells: { A1: 'Hi' }, cols: 26, rows: 100, fmt: { A1: { b: true } } };
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await (await exportXlsx(sheet)).arrayBuffer());
+    expect(wb.getWorksheet('Sheet1')!.getCell('A1').font?.bold).toBe(true);
+  });
+
   it('TC-07.1.2 — docx is valid and contains the content (all block types)', async () => {
     const doc = normalizeDoc({
       html: '<h1>Proposal</h1><h2>Goals</h2><h3>Detail</h3><p>intro</p><ul><li>one</li></ul>',
