@@ -5,6 +5,16 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M4: AI Slides ("prompt → deck") ⭐
+- **Slides editor** (`src/ui/slides/`): thumbnail rail + stage, inline text editing, add/delete slide, and a full-screen
+  **present mode** (←/→ navigate, Esc exit) — replaces the placeholder.
+- **AI deck generation**: a prompt → `SlideIntent` (the model emits titles + bullets only) → **deterministic layout**
+  (`deck-applier`, cover + content templates; all geometry/colour from our code) → a presentable `SlideDeck`. Generalised
+  the M3 pipeline (`generateIntent<T>`) so Sheets + Slides share one guardrail+self-correction loop (Open/Closed).
+- Mock model now returns a deck fixture for slide prompts (routes by system prompt); Shiva/BYOK swaps in behind `LlmPort`.
+- Slides domain (`src/domain/slides/`) with immutable deck ops. Tests: 8 unit + 1 integration + 1 eval + 3 e2e
+  (generate, present, inline-edit-persist). 70 unit/integration/eval + 12 e2e green. Slice docs: `docs/features/04-ai-slides`.
+
 ### Added — M3: AI plumbing (the narrator spine)
 - **AI pipeline** (`src/ai/`) realising ADR-0003: `LlmPort` (model abstraction) → `validateSheetIntent` (hand-written
   schema, no vendor) → guardrail pipeline with **bounded self-correction** → deterministic `applySheetIntent` → engine
