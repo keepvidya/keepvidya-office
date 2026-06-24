@@ -5,6 +5,16 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M7: Real Office export (.xlsx / .docx / .pptx) — "opens in MS Office"
+- **Three export adapters** wrapping ExcelJS / docx / pptxgenjs (Wrapper Rule — vendors only under `src/adapters/export`,
+  enforced by eslint + dependency-cruiser) exposing an `ExportPort`. An **Export** button in each editor downloads the
+  matching Office file.
+- Spreadsheet exports **live formulas** (Excel recalculates) + cached results; documents preserve heading/paragraph/bullet
+  structure; decks export one slide per slide with positioned text. Verified valid OOXML (ZIP/PK) — xlsx **round-trips**
+  its formula, docx/pptx content checked by unzip; also produced valid files **in the browser** (docx `Packer.toBlob` path).
+- **Lazy-loaded**: the heavy export libraries are code-split and load only on first export — the **main bundle stays ~17.5 kB
+  gzipped** (down from ~514 kB). 91 unit/integration + 16 e2e green. Slice docs: `docs/features/07-office-export`.
+
 ### Added — M6: AI Writer ("prompt → document") — completes the trifecta
 - **Writer editor** (`src/ui/writer/`): a contentEditable document page with an `execCommand` toolbar (paragraph styles,
   bold/italic/underline, lists, undo/redo), a live word count, an AI prompt bar, and autosave — replaces the placeholder.

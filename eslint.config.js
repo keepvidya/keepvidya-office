@@ -25,4 +25,6 @@ export default [
   },
   // adapters are the ONLY place a vendor type may appear
   { files: ['src/adapters/**/*.ts'], rules: { 'no-restricted-imports': 'off' } },
+  // tests may import vendors to verify adapter output
+  { files: ['tests/**/*.ts'], rules: { 'no-restricted-imports': 'off' } },
 ];

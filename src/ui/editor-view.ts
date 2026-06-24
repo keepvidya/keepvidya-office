@@ -6,9 +6,12 @@ export interface EditorHandlers {
   file: OfficeFile;
   onBack: () => void;
   onRename: (name: string) => void;
+  onExport?: () => void;
 }
 
-// Shared editor chrome (back, type dot, title, saved indicator) wrapping a body node.
+const EXPORT_LABEL: Record<string, string> = { writer: 'Export .docx', sheets: 'Export .xlsx', slides: 'Export .pptx' };
+
+// Shared editor chrome (back, type dot, title, saved indicator, export) wrapping a body node.
 export function editorChrome(h: EditorHandlers, body: Node): HTMLElement {
   const title = el('input', {
     class: 'title',
@@ -29,6 +32,14 @@ export function editorChrome(h: EditorHandlers, body: Node): HTMLElement {
     el('span', { class: 'ftype-dot', style: `background:var(--${h.file.type})` }),
     title,
     el('span', { class: 'saved', html: '<span class="dot"></span>Saved locally' }),
+    h.onExport
+      ? el('button', {
+          class: 'edbtn',
+          text: EXPORT_LABEL[h.file.type] ?? 'Export',
+          'data-testid': 'export-btn',
+          onclick: () => h.onExport?.(),
+        })
+      : null,
   ]);
   return el('div', { class: 'ed', 'data-testid': 'editor' }, [edbar, body]);
 }

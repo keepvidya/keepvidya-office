@@ -9,6 +9,7 @@ import { renderSheets } from '../ui/sheets/sheets-view';
 import { renderSlides } from '../ui/slides/slides-view';
 import { renderWriter } from '../ui/writer/writer-view';
 import { renderSettingsModal } from '../ui/settings';
+import { download } from '../ui/download';
 import { type Route, createRouter, routeToHash } from './router';
 import { createFile, deleteFile, listFiles, openFile, renameFile, saveData } from '../domain/use-cases';
 import { normalizeSheet } from '../domain/sheet/sheet';
@@ -18,7 +19,7 @@ import { currentTheme, toggleTheme } from '../domain/theme';
 import { fillSheet } from '../ai/orchestrator';
 import { buildDeck } from '../ai/deck-orchestrator';
 import { buildDoc } from '../ai/doc-orchestrator';
-import type { ClockPort, IdPort, ProviderSettingsPort, StoragePort, ThemePort } from '../domain/ports';
+import type { ClockPort, ExportPort, IdPort, ProviderSettingsPort, StoragePort, ThemePort } from '../domain/ports';
 import type { LlmPort } from '../ai/ports';
 import type { FileType } from '../domain/file';
 
@@ -29,6 +30,7 @@ export interface AppPorts {
   theme: ThemePort;
   llm: LlmPort;
   settings: ProviderSettingsPort;
+  export: ExportPort;
 }
 
 export interface App {
@@ -56,6 +58,7 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
         file,
         onBack: () => router.go('#/home'),
         onRename: (name: string) => void renameFile(deps, route.id, name),
+        onExport: () => void doExport(route.id),
       };
       const body =
         file.type === 'sheets'
@@ -148,6 +151,16 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
       onClose: () => modal.remove(),
     });
     document.body.appendChild(modal);
+  }
+
+  async function doExport(id: string): Promise<void> {
+    const res = await openFile(deps, id);
+    if (!res.ok) return;
+    const f = res.value;
+    const name = (f.name || 'document').replace(/[^\w.-]+/g, '_');
+    if (f.type === 'sheets') download(`${name}.xlsx`, await ports.export.xlsx(normalizeSheet(f.data)));
+    else if (f.type === 'slides') download(`${name}.pptx`, await ports.export.pptx(normalizeDeck(f.data)));
+    else download(`${name}.docx`, await ports.export.docx(normalizeDoc(f.data)));
   }
 
   return {
