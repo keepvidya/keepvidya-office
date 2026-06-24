@@ -25,12 +25,28 @@ export const DECK_FIXTURE = JSON.stringify({
   ],
 });
 
-// When called with no fixed text, route by the system prompt: deck vs sheet.
+// A project-proposal document the mock returns for writer prompts.
+export const DOC_FIXTURE = JSON.stringify({
+  blocks: [
+    { type: 'heading', level: 1, text: 'Project Proposal' },
+    { type: 'paragraph', text: 'This document outlines the plan, goals, and timeline for the project.' },
+    { type: 'heading', level: 2, text: 'Goals' },
+    { type: 'bullets', items: ['Ship a working MVP', 'Validate with early users', 'Keep everything local-first'] },
+    { type: 'heading', level: 2, text: 'Timeline' },
+    { type: 'paragraph', text: 'We aim to deliver the first release within six weeks.' },
+  ],
+});
+
+// When called with no fixed text, route by the system prompt: document vs deck vs sheet.
 export function createFixtureLlm(text?: string): LlmPort {
   return {
     async complete(req) {
       if (text != null) return { text };
-      return { text: /slide|deck/i.test(req.system) ? DECK_FIXTURE : BUDGET_FIXTURE };
+      // route by a unique token in each system prompt (avoid words like "prose"
+      // that appear in several of them)
+      if (/\bdocument\b/i.test(req.system)) return { text: DOC_FIXTURE };
+      if (/\bslide\b|\bdeck\b/i.test(req.system)) return { text: DECK_FIXTURE };
+      return { text: BUDGET_FIXTURE };
     },
   };
 }

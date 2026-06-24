@@ -7,14 +7,17 @@ import { renderHome } from '../ui/home';
 import { editorChrome, placeholderBody } from '../ui/editor-view';
 import { renderSheets } from '../ui/sheets/sheets-view';
 import { renderSlides } from '../ui/slides/slides-view';
+import { renderWriter } from '../ui/writer/writer-view';
 import { renderSettingsModal } from '../ui/settings';
 import { type Route, createRouter, routeToHash } from './router';
 import { createFile, deleteFile, listFiles, openFile, renameFile, saveData } from '../domain/use-cases';
 import { normalizeSheet } from '../domain/sheet/sheet';
 import { normalizeDeck } from '../domain/slides/slides';
+import { normalizeDoc } from '../domain/doc/doc';
 import { currentTheme, toggleTheme } from '../domain/theme';
 import { fillSheet } from '../ai/orchestrator';
 import { buildDeck } from '../ai/deck-orchestrator';
+import { buildDoc } from '../ai/doc-orchestrator';
 import type { ClockPort, IdPort, ProviderSettingsPort, StoragePort, ThemePort } from '../domain/ports';
 import type { LlmPort } from '../ai/ports';
 import type { FileType } from '../domain/file';
@@ -73,7 +76,16 @@ export function createApp(host: HTMLElement, ports: AppPorts): App {
                   return { deck: r.deck, ok: r.ok, note: r.note };
                 },
               })
-            : placeholderBody(file);
+            : file.type === 'writer'
+              ? renderWriter({
+                  data: normalizeDoc(file.data),
+                  onChange: (d) => void saveData(deps, route.id, d),
+                  aiWrite: async (prompt, d) => {
+                    const r = await buildDoc(prompt, d, { llm: ports.llm });
+                    return { data: r.data, ok: r.ok, note: r.note };
+                  },
+                })
+              : placeholderBody(file);
       mount(host, shell(editorChrome(handlers, body)));
       return;
     }

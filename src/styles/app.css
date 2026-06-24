@@ -136,3 +136,19 @@ table.grid th.collbl.active,table.grid th.rowlbl.active{background:var(--primary
 .settings-field span{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:5px}
 .settings-err{color:var(--error);font-size:12.5px;min-height:16px;margin-bottom:6px}
 .settings-row{display:flex;gap:9px;justify-content:flex-end;margin-top:6px}
+
+/* writer */
+.w-root{flex:1;display:flex;flex-direction:column;min-height:0}
+.tbar{display:flex;align-items:center;gap:3px;padding:7px 12px;border-bottom:1px solid var(--border);background:var(--surface-2);flex-wrap:wrap}
+.tbar .grp{display:flex;align-items:center;gap:2px;padding:0 5px;border-right:1px solid var(--border)}
+.tbar .grp:last-child{border-right:none}
+.tb{height:32px;min-width:32px;padding:0 8px;border:1px solid transparent;background:none;border-radius:8px;color:var(--text-secondary);font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+.tb:hover{background:var(--surface);color:var(--text)}
+.tb b{font-weight:800}.tb i{font-style:italic}.tb u{text-decoration:underline}
+.tbsel{height:32px;border:1px solid var(--border-strong);background:var(--surface);border-radius:8px;padding:0 6px;font-size:12.5px;color:var(--text)}
+.w-scroll{flex:1;overflow:auto;background:var(--surface-2);padding:28px 0}
+.w-page{width:816px;max-width:calc(100% - 48px);min-height:1040px;margin:0 auto;background:var(--surface);box-shadow:var(--shadow-md);border:1px solid var(--border);border-radius:3px;padding:80px 92px;outline:none;font-family:var(--font-heading);font-size:16px;line-height:1.65;color:var(--text)}
+.w-page:focus{box-shadow:var(--shadow-lg)}
+.w-page h1{font-size:30px;margin:.2em 0 .4em}.w-page h2{font-size:23px;margin:.7em 0 .3em}.w-page h3{font-size:19px;margin:.7em 0 .3em}
+.w-page p{margin:0 0 .7em}.w-page ul,.w-page ol{margin:0 0 .7em;padding-left:1.5em}
+.w-status{display:flex;align-items:center;gap:16px;padding:6px 16px;border-top:1px solid var(--border);background:var(--surface);font-size:11.5px;color:var(--text-muted)}
