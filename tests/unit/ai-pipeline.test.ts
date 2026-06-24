@@ -26,4 +26,16 @@ describe('TS-03.1 — guardrail pipeline & self-correction', () => {
     expect(r.trace).toHaveLength(1);
     expect(r.trace[0].ok).toBe(true);
   });
+
+  it('TC-05.1.7 — a model/network error is a failed attempt, not a throw', async () => {
+    const llm = {
+      complete: async () => {
+        throw new Error('network down');
+      },
+    };
+    const r = await generateSheetIntent('x', { llm, maxRetries: 1 });
+    expect(r.ok).toBe(false);
+    expect(r.trace).toHaveLength(2); // attempts 0, 1 — bounded, no hang
+    expect(r.error).toContain('Model call failed');
+  });
 });

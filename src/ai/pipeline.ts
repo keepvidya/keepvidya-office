@@ -38,7 +38,15 @@ export async function generateIntent<T>(
     const userPrompt = lastError
       ? `${prompt}\n\nYour previous reply was rejected: ${lastError}\nReturn corrected JSON only.`
       : prompt;
-    const res = await llm.complete({ system: cfg.system, prompt: userPrompt });
+    let res;
+    try {
+      res = await llm.complete({ system: cfg.system, prompt: userPrompt });
+    } catch (e) {
+      // a model/network error is a failed attempt, never an exception to the UI
+      lastError = `Model call failed: ${e instanceof Error ? e.message : String(e)}`;
+      trace.push({ attempt, ok: false, detail: lastError });
+      continue;
+    }
     const parsed = cfg.validate(res.text);
     if (parsed.ok) {
       trace.push({ attempt, ok: true, detail: 'validated' });

@@ -5,6 +5,17 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Added — M5: Real model providers (Shiva / BYOK)
+- **Real `LlmPort` adapters**: `ollama-llm` (Shiva via a local Ollama endpoint, default-private, no key) and
+  `openai-compat-llm` (BYOK — any OpenAI-compatible endpoint, Bearer key), plus a **configurable** `LlmPort` (Proxy) that
+  resolves the provider from current settings on each call. Mock stays the default (offline + CI deterministic).
+- **AI provider settings panel** (gear in the rail): Built-in demo / Local Shiva / BYOK + endpoint + model (+ key). Config
+  persisted locally via a `ProviderSettingsPort` (localStorage); keys never leave the device; no provider call unless opted in.
+- **Pipeline resilience**: a model/network error is now a clean failed attempt (note, sheet/deck unchanged), never a throw.
+- Tests: provider config + settings + both HTTP adapters (fetch mocked: request shape, parse, error) + configurable
+  dispatch + resilience + an integration fillSheet over a stubbed Ollama + a settings e2e. 80 unit/integration/eval + 13 e2e
+  green. Slice docs: `docs/features/05-real-providers`.
+
 ### Added — M4: AI Slides ("prompt → deck") ⭐
 - **Slides editor** (`src/ui/slides/`): thumbnail rail + stage, inline text editing, add/delete slide, and a full-screen
   **present mode** (←/→ navigate, Esc exit) — replaces the placeholder.
