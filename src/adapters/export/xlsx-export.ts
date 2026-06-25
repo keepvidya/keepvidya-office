@@ -24,6 +24,8 @@ export async function exportXlsx(data: SheetData): Promise<Blob> {
       const n = Number(raw);
       cell.value = raw.trim() !== '' && !Number.isNaN(n) ? n : raw;
     }
+    const f = data.fmt?.[ref];
+    if (f && (f.b || f.i)) cell.font = { bold: !!f.b, italic: !!f.i };
   }
 
   const buf = await wb.xlsx.writeBuffer();
